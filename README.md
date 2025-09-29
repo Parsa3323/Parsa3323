@@ -1,5 +1,6 @@
 
-![](https://biaupload.com/do.php?imgf=org-96da2a38132c1.png)
+<img width="1920" height="422" alt="Name" src="https://github.com/user-attachments/assets/77416d1a-1227-4097-9a11-d3b2a7ed3de7" />
+
 <div align="center">
 
 
@@ -8,29 +9,26 @@
 ![](https://github-readme-stats.vercel.app/api/top-langs/?username=Parsa3323&theme=dark&hide_border=true&include_all_commits=true&count_private=false&layout=compact)
 
 </div>
-
-
-
-
 <div align="center">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" style="height:30px; width:30px;" alt="javascript logo" />
-  <img width="12" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" style="height:30px; width:30px;" alt="typescript logo" />
-  <img width="12" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" style="height:30px; width:30px;" alt="react logo" />
-  <img width="12" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" style="height:30px; width:30px;" alt="html5 logo" />
-  <img width="12" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" style="height:30px; width:30px;" alt="css3 logo" />
-  <img width="12" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" style="height:30px; width:30px;" alt="python logo" /> </br> </br>
-      <a href="https://discord.gg/KUBewtmW" target="_blank">
-    <img src="https://img.shields.io/static/v1?message=Discord&logo=discord&label=&color=7289DA&logoColor=white&labelColor=&style=for-the-badge" height="35" alt="discord logo"  />
-  </a>
+
+<img width="400" alt="lang2" src="https://github.com/user-attachments/assets/29746fab-e47f-4220-a145-c4b47669ae39" />
+
+
+---
+
+
+<img width="600" alt="icon" src="https://github.com/user-attachments/assets/9102e689-61f6-472e-95fc-bda03eaf94a1" />
+
 </div>
 
 
 <div align="center">
+
+  
+<img width="400" alt="snake" src="https://github.com/user-attachments/assets/1fb18151-6b2a-416c-b4d1-2576c0bba7b0" />
+
+---
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Parsa3323/Parsa3323/output/github-snake-dark.svg" />
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Parsa3323/Parsa3323/output/github-snake.svg" />
@@ -38,6 +36,14 @@
 </picture>
 </div>
 
+
+<div align="center">
+
+<img width="400" alt="ContactMe" src="https://github.com/user-attachments/assets/b848ac31-800b-4724-b3e8-2c4b089e6ee9" /> </br>
+
+---
+[<img width="400" alt="pyUT76b" src="https://github.com/user-attachments/assets/d5d495e7-2734-4bcb-931f-3e63e70165a9" />
+](https://discord.com/users/874605084909121586)
 
 
 

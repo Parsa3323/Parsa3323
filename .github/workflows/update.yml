@@ -1,8 +1,8 @@
-name: Update Pinned Repositories
+name: Update Pinned Projects
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 */3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -42,8 +42,10 @@ jobs:
         run: |
           python3 <<'PY'
           from pathlib import Path
+          from datetime import datetime, timedelta, timezone
 
-          readme = Path("README.md").read_text()
+          readme_path = Path("README.md")
+          readme = readme_path.read_text(encoding="utf-8")
 
           rows = []
 
@@ -74,7 +76,30 @@ jobs:
               </tr>'''
                   )
 
-          table = """
+          now = datetime.now(timezone.utc)
+
+          next_run = now.replace(
+              minute=0,
+              second=0,
+              microsecond=0
+          )
+
+          hours_until_next = 3 - (next_run.hour % 3)
+
+          if hours_until_next == 0:
+              hours_until_next = 3
+
+          next_run += timedelta(hours=hours_until_next)
+
+          generated = now.strftime("%B %d, %Y at %H:%M UTC")
+          next_generation = next_run.strftime("%B %d, %Y at %H:%M UTC")
+
+          timestamp = f'''<p align="center">
+            Last generated: {generated} · Next generation: {next_generation}
+          </p>'''
+
+          table = f'''<h3>Open source projects</h3>
+
           <table>
             <thead align="center">
               <tr>
@@ -86,39 +111,36 @@ jobs:
               </tr>
             </thead>
             <tbody>
-          """ + "\n".join(rows) + """
+          {"".join(rows)}
             </tbody>
-          </table>"""
+          </table>'''
 
           start_marker = "<!-- PINNED_PROJECTS_START -->"
           end_marker = "<!-- PINNED_PROJECTS_END -->"
 
-          if start_marker in readme and end_marker in readme:
-              start = readme.index(start_marker) + len(start_marker)
-              end = readme.index(end_marker)
-
-              readme = (
-                  readme[:start]
-                  + "\n\n"
-                  + table
-                  + "\n\n"
-                  + readme[end:]
+          if start_marker not in readme or end_marker not in readme:
+              raise SystemExit(
+                  "README.md must contain PINNED_PROJECTS_START and PINNED_PROJECTS_END markers"
               )
-          else:
-              section = "## My projects\n\n" + start_marker + "\n\n" + table + "\n\n" + end_marker
 
-              if "## My projects" in readme:
-                  start = readme.index("## My projects")
-                  next_section = readme.find("\n## ", start + len("## My projects"))
+          start = readme.index(start_marker) + len(start_marker)
+          end = readme.index(end_marker)
 
-                  if next_section == -1:
-                      readme = readme[:start] + section + "\n"
-                  else:
-                      readme = readme[:start] + section + readme[next_section:]
-              else:
-                  readme += "\n\n" + section + "\n"
+          generated_content = f'''
 
-          Path("README.md").write_text(readme)
+          {timestamp}
+
+          {table}
+
+          '''
+
+          readme = (
+              readme[:start]
+              + generated_content
+              + readme[end:]
+          )
+
+          readme_path.write_text(readme, encoding="utf-8")
           PY
 
       - name: Commit changes
@@ -133,5 +155,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "chore: update pinned repositories"
+          git commit -m "chore: update pinned projects"
           git push

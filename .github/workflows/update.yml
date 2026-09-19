@@ -1,0 +1,122 @@
+name: Update Pinned Repositories
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update README
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs")
+
+            const username = "Parsa3323"
+
+            const query = `
+              query($login: String!) {
+                user(login: $login) {
+                  pinnedItems(first: 6, types: REPOSITORY) {
+                    nodes {
+                      ... on Repository {
+                        name
+                        nameWithOwner
+                        url
+                      }
+                    }
+                  }
+                }
+              }
+            `
+
+            const result = await github.graphql(query, {
+              login: username
+            })
+
+            const repos = result.user.pinnedItems.nodes
+
+            const rows = repos.map(repo => {
+              const owner = repo.nameWithOwner.split("/")[0]
+              const name = repo.name
+
+              return `    <tr>
+      <td>
+        <a href="${repo.url}">
+          <b>${name}</b>
+        </a>
+      </td>
+      <td>
+        <img alt="Stars" src="https://img.shields.io/github/stars/${owner}/${name}?style=flat-square&labelColor=343b41">
+      </td>
+      <td>
+        <img alt="Forks" src="https://img.shields.io/github/forks/${owner}/${name}?style=flat-square&labelColor=343b41">
+      </td>
+      <td>
+        <img alt="Issues" src="https://img.shields.io/github/issues/${owner}/${name}?style=flat-square&labelColor=343b41">
+      </td>
+      <td>
+        <img alt="Pull Requests" src="https://img.shields.io/github/issues-pr/${owner}/${name}?style=flat-square&labelColor=343b41">
+      </td>
+    </tr>`
+            }).join("\n")
+
+            const table = `<h3>Open source projects</h3>
+
+<table>
+  <thead align="center">
+    <tr>
+      <td><b>Projects</b></td>
+      <td><b>Stars</b></td>
+      <td><b>Forks</b></td>
+      <td><b>Issues</b></td>
+      <td><b>Pull requests</b></td>
+    </tr>
+  </thead>
+  <tbody>
+${rows}
+  </tbody>
+</table>`
+
+            const readme = fs.readFileSync("README.md", "utf8")
+
+            const start = readme.indexOf("## My projects")
+            const end = readme.indexOf("\n## ", start + 1)
+
+            if (start === -1) {
+              core.setFailed("Could not find '## My projects' in README.md")
+              return
+            }
+
+            const sectionEnd = end === -1 ? readme.length : end
+
+            const newReadme =
+              readme.slice(0, start) +
+              `## My projects\n\n${table}` +
+              readme.slice(sectionEnd)
+
+            if (newReadme === readme) {
+              console.log("README is already up to date")
+              return
+            }
+
+            fs.writeFileSync("README.md", newReadme)
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --cached --quiet || git commit -m "chore: update pinned repositories"
+          git push

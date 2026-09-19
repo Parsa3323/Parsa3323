@@ -48,6 +48,24 @@ jobs:
           path = Path("README.md")
           readme = path.read_text(encoding="utf-8")
 
+          table_start = "<!-- PINNED_PROJECTS_START -->"
+          table_end = "<!-- PINNED_PROJECTS_END -->"
+
+          readme = readme.replace(r"\<!-- PINNED_PROJECTS_START -->", table_start)
+          readme = readme.replace(r"\<!-- PINNED_PROJECTS_END -->", table_end)
+
+          starts = [m.start() for m in re.finditer(re.escape(table_start), readme)]
+          ends = [m.start() for m in re.finditer(re.escape(table_end), readme)]
+
+          if not starts or not ends:
+              raise SystemExit("Pinned project markers are missing")
+
+          start = starts[0]
+          end = next((pos for pos in ends if pos > start), None)
+
+          if end is None:
+              raise SystemExit("Pinned project end marker is missing")
+
           rows = []
 
           with open("pinned.txt", encoding="utf-8") as file:
@@ -75,9 +93,7 @@ jobs:
                 </td>
               </tr>""")
 
-          table = f"""<h3>Open source projects</h3>
-
-          <table>
+          table = f"""<table>
             <thead align="center">
               <tr>
                 <td><b>Projects</b></td>
@@ -92,21 +108,23 @@ jobs:
             </tbody>
           </table>"""
 
-          table_start = "<!-- PINNED_PROJECTS_START -->"
-          table_end = "<!-- PINNED_PROJECTS_END -->"
-
-          if table_start not in readme or table_end not in readme:
-              raise SystemExit("Pinned project markers are missing")
-
-          start = readme.index(table_start) + len(table_start)
-          end = readme.index(table_end)
-
           readme = (
               readme[:start]
+              + table_start
               + "\n\n"
               + table
               + "\n\n"
-              + readme[end:]
+              + table_end
+              + readme[end + len(table_end):]
+          )
+
+          timestamp_pattern = re.compile(
+              r'<p align="center">\s*'
+              r'Last generated:.*?'
+              r'(?:<br\s*/?>\s*|\n\s*)?'
+              r'Next generation:.*?'
+              r'</p>',
+              re.DOTALL
           )
 
           now = datetime.now(timezone.utc)
@@ -124,18 +142,32 @@ jobs:
           next_generation = next_run.strftime("%B %d, %Y at %H:%M UTC")
 
           timestamp = f"""<p align="center">
-            Last generated: {generated} · Next generation: {next_generation}
+            Last generated: {generated}<br>
+            Next generation: {next_generation}
           </p>"""
 
-          timestamp_pattern = re.compile(
-              r'<p align="center">\s*Last generated:.*?Next generation:.*?</p>',
+          readme = timestamp_pattern.sub("", readme)
+
+          badge_pattern = re.compile(
+              r'<p align="center">\s*'
+              r'<a href="https://github\.com/Parsa3323/Parsa3323/actions/workflows/update\.yml">\s*'
+              r'<img[^>]*actions/workflows/update\.yml/badge\.svg[^>]*>\s*'
+              r'</a>\s*'
+              r'</p>',
               re.DOTALL
           )
 
-          if timestamp_pattern.search(readme):
-              readme = timestamp_pattern.sub(timestamp, readme)
-          else:
-              readme = readme.rstrip() + "\n\n" + timestamp + "\n"
+          readme = badge_pattern.sub("", readme)
+
+          readme = readme.rstrip()
+
+          badge = """<p align="center">
+            <a href="https://github.com/Parsa3323/Parsa3323/actions/workflows/update.yml">
+              <img src="https://github.com/Parsa3323/Parsa3323/actions/workflows/update.yml/badge.svg" alt="Update Pinned Projects">
+            </a>
+          </p>"""
+
+          readme = readme + "\n\n" + timestamp + "\n\n" + badge + "\n"
 
           path.write_text(readme, encoding="utf-8")
           PY

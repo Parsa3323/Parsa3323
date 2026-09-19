@@ -34,7 +34,7 @@ jobs:
           echo "$response" | jq -r '.data.user.pinnedItems.nodes[] | [.name, .nameWithOwner, .url] | @tsv' > pinned.txt
 
           if [ ! -s pinned.txt ]; then
-            echo "No pinned repositories were returned"
+            echo "No pinned repositories found"
             exit 1
           fi
 
@@ -43,19 +43,19 @@ jobs:
           python3 <<'PY'
           from pathlib import Path
           from datetime import datetime, timedelta, timezone
+          import re
 
-          readme_path = Path("README.md")
-          readme = readme_path.read_text(encoding="utf-8")
+          path = Path("README.md")
+          readme = path.read_text(encoding="utf-8")
 
           rows = []
 
-          with open("pinned.txt", "r", encoding="utf-8") as file:
+          with open("pinned.txt", encoding="utf-8") as file:
               for line in file:
-                  name, name_with_owner, url = line.rstrip("\n").split("\t")
-                  owner, repo = name_with_owner.split("/", 1)
+                  name, full_name, url = line.rstrip("\n").split("\t")
+                  owner, repo = full_name.split("/", 1)
 
-                  rows.append(
-                      f'''    <tr>
+                  rows.append(f"""    <tr>
                 <td>
                   <a href="{url}">
                     <b>{name}</b>
@@ -73,32 +73,9 @@ jobs:
                 <td>
                   <img alt="Pull Requests" src="https://img.shields.io/github/issues-pr/{owner}/{repo}?style=flat-square&labelColor=343b41">
                 </td>
-              </tr>'''
-                  )
+              </tr>""")
 
-          now = datetime.now(timezone.utc)
-
-          next_run = now.replace(
-              minute=0,
-              second=0,
-              microsecond=0
-          )
-
-          hours_until_next = 3 - (next_run.hour % 3)
-
-          if hours_until_next == 0:
-              hours_until_next = 3
-
-          next_run += timedelta(hours=hours_until_next)
-
-          generated = now.strftime("%B %d, %Y at %H:%M UTC")
-          next_generation = next_run.strftime("%B %d, %Y at %H:%M UTC")
-
-          timestamp = f'''<p align="center">
-            Last generated: {generated} · Next generation: {next_generation}
-          </p>'''
-
-          table = f'''<h3>Open source projects</h3>
+          table = f"""<h3>Open source projects</h3>
 
           <table>
             <thead align="center">
@@ -113,34 +90,54 @@ jobs:
             <tbody>
           {"".join(rows)}
             </tbody>
-          </table>'''
+          </table>"""
 
-          start_marker = "<!-- PINNED_PROJECTS_START -->"
-          end_marker = "<!-- PINNED_PROJECTS_END -->"
+          table_start = "<!-- PINNED_PROJECTS_START -->"
+          table_end = "<!-- PINNED_PROJECTS_END -->"
 
-          if start_marker not in readme or end_marker not in readme:
-              raise SystemExit(
-                  "README.md must contain PINNED_PROJECTS_START and PINNED_PROJECTS_END markers"
-              )
+          if table_start not in readme or table_end not in readme:
+              raise SystemExit("Pinned project markers are missing")
 
-          start = readme.index(start_marker) + len(start_marker)
-          end = readme.index(end_marker)
-
-          generated_content = f'''
-
-          {timestamp}
-
-          {table}
-
-          '''
+          start = readme.index(table_start) + len(table_start)
+          end = readme.index(table_end)
 
           readme = (
               readme[:start]
-              + generated_content
+              + "\n\n"
+              + table
+              + "\n\n"
               + readme[end:]
           )
 
-          readme_path.write_text(readme, encoding="utf-8")
+          now = datetime.now(timezone.utc)
+
+          next_run = now.replace(
+              minute=0,
+              second=0,
+              microsecond=0
+          )
+
+          while next_run <= now or next_run.hour % 3 != 0:
+              next_run += timedelta(hours=1)
+
+          generated = now.strftime("%B %d, %Y at %H:%M UTC")
+          next_generation = next_run.strftime("%B %d, %Y at %H:%M UTC")
+
+          timestamp = f"""<p align="center">
+            Last generated: {generated} · Next generation: {next_generation}
+          </p>"""
+
+          timestamp_pattern = re.compile(
+              r'<p align="center">\s*Last generated:.*?Next generation:.*?</p>',
+              re.DOTALL
+          )
+
+          if timestamp_pattern.search(readme):
+              readme = timestamp_pattern.sub(timestamp, readme)
+          else:
+              readme = readme.rstrip() + "\n\n" + timestamp + "\n"
+
+          path.write_text(readme, encoding="utf-8")
           PY
 
       - name: Commit changes

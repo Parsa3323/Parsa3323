@@ -13,15 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Generate App Token
         id: app_token
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.PARSA_MANAGER_APP_ID }}
           private-key: ${{ secrets.PARSA_MANAGER_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app_token.outputs.token }}
 
       - name: Get pinned repositories
         env:
@@ -180,12 +182,7 @@ jobs:
           PY
 
       - name: Commit changes
-        env:
-          GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          git config user.name "parsa-s-manager[bot]"
-          git config user.email "${{ secrets.PARSA_MANAGER_APP_ID }}+parsa-s-manager[bot]@users.noreply.github.com"
-
           git add README.md
 
           if git diff --cached --quiet; then
@@ -194,5 +191,4 @@ jobs:
           fi
 
           git commit -m "chore: update pinned projects"
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/Parsa3323/Parsa3323.git"
           git push
